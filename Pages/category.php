@@ -1,0 +1,221 @@
+<?php
+$serverName = "HELIOS";
+$connectionOptions = [
+    "Database" => "IMS",
+    "Uid" => "",
+    "PWD" => ""
+];
+$conn = sqlsrv_connect($serverName, $connectionOptions);
+if (!$conn) {
+    die(print_r(sqlsrv_errors(), true));
+}
+
+$sql = "SELECT * FROM CATEGORIES";
+$result = sqlsrv_query($conn, $sql);
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Categories</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body { background-color: #f4f6f9; }
+        .sidebar {
+            width: 250px;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+        }
+        .sidebar a {
+            color: #e0e0e0;
+            padding: 12px 20px;
+            display: block;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+        .sidebar a.active,
+        .sidebar a:hover {
+            background-color: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+        .content { padding: 25px; }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            border: none;
+        }
+    </style>
+</head>
+
+<body>
+<div class="d-flex">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar p-3">
+        <h4 class="text-center text-white mb-4">INVENTORY MS</h4>
+        <a href="/IMS/Pages/dashboard.php">Dashboard</a>
+        <a href="/IMS/Pages/products.php">Products</a>
+        <a href="#" class="active">Categories</a>
+        <a href="/IMS/Pages/orders.php">Orders</a>
+        <a href="#">Users</a>
+        <a href="/IMS/index.html">Logout</a>
+    </div>
+
+    <!-- MAIN -->
+<div class="flex-grow-1">
+
+            <!-- TOP NAVBAR -->
+            <nav class="navbar navbar-light bg-white shadow-sm px-4">
+                <span class="navbar-brand mb-0 h5">
+                    Categories
+                </span>
+                <span class="fw-semibold">
+                    Welcome, Admin
+                </span>
+
+            </nav>
+    <div class="content">
+
+<div class="row justify-content-start">
+    <div class="col-md-6 col-lg-5">
+
+        <div class="card p-4">
+
+            <!-- TITLE -->
+            <h2 class="mb-3">Category List</h2>
+
+            <!-- ACTION + SEARCH -->
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <input
+                    type="text"
+                    id="categorySearch"
+                    class="form-control search-input " style="max-width: 220px;"
+                    placeholder="Search category..."
+                >
+
+                <button class="btn btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#addCategoryModal">
+                    + Add Category
+                </button>
+            </div>
+
+            <!-- TABLE -->
+            <table class="table align-middle mb-3" id="categoryTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Category Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <?php while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) { ?>
+                    <tr>
+                        <td><?= $row['CATEGORY_ID'] ?></td>
+                        <td><?= htmlspecialchars($row['CATEGORY_NAME']) ?></td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <button
+                                    class="btn btn-sm btn-warning"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editCategoryModal"
+                                    data-id="<?= $row['CATEGORY_ID'] ?>"
+                                    data-name="<?= htmlspecialchars($row['CATEGORY_NAME'], ENT_QUOTES) ?>">
+                                    Edit
+                                </button>
+
+                                <a href="/IMS/Category/DeleteCategory.php?id=<?= $row['CATEGORY_ID'] ?>"
+                                   class="btn btn-sm btn-danger"
+                                   onclick="return confirm('Delete this category?')">
+                                   Delete
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                <?php } ?>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+
+
+    </div>
+</div>
+
+</div>
+
+<!-- ADD CATEGORY MODAL -->
+<div class="modal fade" id="addCategoryModal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="/IMS/Category/AddCategory.php" method="POST">
+                <div class="modal-header">
+                    <h5>Add Category</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Category Name</label>
+                    <input type="text" name="category_name" class="form-control" required>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT CATEGORY MODAL -->
+<div class="modal fade" id="editCategoryModal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="/IMS/Category/EditCategory.php" method="POST">
+                <input type="hidden" name="category_id" id="edit_id">
+                <div class="modal-header">
+                    <h5>Edit Category</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Category Name</label>
+                    <input type="text" name="category_name" id="edit_name" class="form-control" required>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-warning">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('editCategoryModal')
+.addEventListener('show.bs.modal', function (event) {
+    let btn = event.relatedTarget;
+    document.getElementById('edit_id').value = btn.getAttribute('data-id');
+    document.getElementById('edit_name').value = btn.getAttribute('data-name');
+});
+</script>
+<script>
+document.getElementById('categorySearch').addEventListener('input', function () {
+    const value = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#categoryTable tbody tr');
+
+    rows.forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(value) ? '' : 'none';
+    });
+});
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

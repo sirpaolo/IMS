@@ -30,6 +30,16 @@ $resulttotal22 = sqlsrv_query($conn, $sql22);
 $resultarray22 = sqlsrv_fetch_array($resulttotal22);
 $totalstock = $resultarray22["TOTAL"];
 
+// Low stock items count
+$sqlLowStock = "
+    SELECT COUNT (PRODUCT_ID) AS LOWSTOCKCOUNT
+    FROM PRODUCTS
+    WHERE QUANTITY <= 5
+";
+$resultLowStock = sqlsrv_query($conn, $sqlLowStock);
+$resultLowStockArray = sqlsrv_fetch_array($resultLowStock);
+$lowStockCount = $resultLowStockArray["LOWSTOCKCOUNT"];
+
 // Fetch revenue
 $sql33 = "SELECT * FROM PRODUCTS";
 $resultall33 = sqlsrv_query($conn, $sql33);
@@ -40,19 +50,68 @@ $resultarray44 = sqlsrv_fetch_array($resulttotal44);
 $totalrevenue = $resultarray44["TOTAL"];
 
 // Product status
+// Low stock items
 $sql55 = "
     SELECT 
         NAME,
         QUANTITY,
         CASE
-            WHEN QUANTITY = 0 THEN 'Out of Stock'
             WHEN QUANTITY <= 5 THEN 'Low Stock'
         END AS STATUS
     FROM PRODUCTS
-    WHERE QUANTITY <= 5
+    WHERE QUANTITY BETWEEN 1 AND 5
 ";
 
 $resulttotal55 = sqlsrv_query($conn, $sql55);
+
+// Out of stock items
+$sqlOut = "
+    SELECT NAME, QUANTITY
+    FROM PRODUCTS
+    WHERE QUANTITY = 0
+";
+$resultOut = sqlsrv_query($conn, $sqlOut);
+
+
+// Fetch stock levels for chart
+$chartSql = "SELECT NAME, QUANTITY FROM PRODUCTS";
+$chartResult = sqlsrv_query($conn, $chartSql);
+
+$productNames = [];
+$productStocks = [];
+
+while ($row = sqlsrv_fetch_array($chartResult, SQLSRV_FETCH_ASSOC)) {
+    $productNames[] = $row['NAME'];
+    $productStocks[] = $row['QUANTITY'];
+}
+
+// Category-wise product count
+$sqlCatChart = "
+    SELECT C.CATEGORY_NAME, COUNT(P.PRODUCT_ID) AS TOTAL
+    FROM CATEGORIES C
+    LEFT JOIN PRODUCTS P ON P.CATEGORY_ID = C.CATEGORY_ID
+    GROUP BY C.CATEGORY_NAME
+";
+
+$resultCatChart = sqlsrv_query($conn, $sqlCatChart);
+
+$categoryLabels = [];
+$categoryCounts = [];
+
+while ($row = sqlsrv_fetch_array($resultCatChart, SQLSRV_FETCH_ASSOC)) {
+    $categoryLabels[] = $row['CATEGORY_NAME'];
+    $categoryCounts[] = $row['TOTAL'];
+}
+
+// Recently added products (latest 3)
+$sqlRecent = "
+    SELECT TOP 3 NAME, QUANTITY
+    FROM PRODUCTS
+    ORDER BY PRODUCT_ID DESC
+";
+$resultRecent = sqlsrv_query($conn, $sqlRecent);
+
+
 ?>
 
 
@@ -123,17 +182,14 @@ $resulttotal55 = sqlsrv_query($conn, $sql55);
 
         <!-- SIDEBAR -->
         <div class="sidebar p-3">
-            <h4 class="text-center mb-4">INVENTORY</h4>
+            <h4 class="text-center mb-4">INVENTORY MS</h4>
 
             <a href="#" class="active">Dashboard</a>
             <a href="/IMS/Pages/products.php">Products</a>
-            <a href="#">Categories</a>
-            <a href="#">Stock In</a>
-            <a href="#">Stock Out</a>
-            <a href="#">Suppliers</a>
-            <a href="#">Reports</a>
+            <a href="/IMS/Pages/category.php">Categories</a>
+            <a href="/IMS/Pages/orders.php">Orders</a>
             <a href="#">Users</a>
-            <a href="#">Logout</a>
+            <a href="/IMS/index.html">Logout</a>
         </div>
 
         <!-- MAIN CONTENT -->
@@ -178,7 +234,10 @@ $resulttotal55 = sqlsrv_query($conn, $sql55);
                     <div class="col-md-3">
                         <div class="card p-3">
                             <p class="text-muted mb-1">Low Stock Items</p>
-                            <div class="stat-number text-danger">8</div>
+                            <div class="stat-number text-danger">
+
+                                <?php echo $lowStockCount; ?>
+                            </div>
                         </div>
                     </div>
 
@@ -186,44 +245,126 @@ $resulttotal55 = sqlsrv_query($conn, $sql55);
                         <div class="card p-3">
                             <p class="text-muted mb-1">Revenue</p>
                             <div class="stat-number">
-                                <?php echo $totalrevenue; ?>
+                                ₱ <?php echo $totalrevenue; ?>
                             </div>
                         </div>
                     </div>
 
                 </div>
 
-                <!-- TABLE -->
-                <div class="card p-4">
-                    <h5 class="mb-3">Recent Products</h5>
+                <div class="row g-4 mb-4">
 
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Product Name</th>
-                                    <th>Stock</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <?php
-                            while ($row = sqlsrv_fetch_array($resulttotal55, SQLSRV_FETCH_ASSOC)) {
-                                $data1 = $row["NAME"];
-                                $data2 = $row["QUANTITY"];
-                                $data3 = $row["STATUS"];
+                    <!-- CATEGORY WISE PRODUCTS CHART (SMALL) -->
+                    <div class="col-md-4">
+                        <div class="card p-4 h-100">
+                            <h5 class="mb-3">Category-wise Products</h5><br>
+                            <div class="d-flex justify-content-center align-items-center" style="height: 220px;">
+                                <canvas id="categoryChart" width="180" height="180"></canvas>
+                            </div>
+                        </div>
+                    </div>
 
-                                echo '<tr>
-                                        <td>' . $data1 . '</td>
-                                        <td>' . $data2 . '</td>
-                                        <td>' . $data3 . '</td>
-                                    </tr>';
-                            }
-                            ?>
-
-                        </table>
+                    <!-- STOCK LEVEL CHART -->
+                    <div class="col-md-8">
+                        <div class="card p-4 h-100">
+                            <h5 class="mb-3">Stock Levels by Product</h5>
+                            <canvas id="stockChart" height="240"></canvas>
+                        </div>
                     </div>
 
                 </div>
+
+
+
+                <div class="row g-4">
+
+                    <!-- LOW STOCK ITEMS -->
+                    <div class="col-md-4">
+                        <div class="card p-4 h-100">
+                            <h5 class="mb-3 text-warning">Low Stock Items</h5>
+
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Product Name</th>
+                                            <th>Stock</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        while ($row = sqlsrv_fetch_array($resulttotal55, SQLSRV_FETCH_ASSOC)) {
+                                            echo '<tr>
+                                <td>' . htmlspecialchars($row["NAME"]) . '</td>
+                                <td>' . $row["QUANTITY"] . '</td>
+                            </tr>';
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- OUT OF STOCK ITEMS -->
+                    <div class="col-md-4">
+                        <div class="card p-4 h-100">
+                            <h5 class="mb-3 text-danger">Out of Stock Items</h5>
+
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Product Name</th>
+                                            <th>Stock</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        while ($row = sqlsrv_fetch_array($resultOut, SQLSRV_FETCH_ASSOC)) {
+                                            echo '<tr>
+                                <td>' . htmlspecialchars($row["NAME"]) . '</td>
+                                <td>0</td>
+                            </tr>';
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RECENTLY ADDED PRODUCTS -->
+                    <div class="col-md-4">
+                        <div class="card p-4 h-100">
+                            <h5 class="mb-3 text-primary">Recently Added Products</h5>
+
+                            <div class="table-responsive">
+                                <table class="table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Product Name</th>
+                                            <th>Stock</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        while ($row = sqlsrv_fetch_array($resultRecent, SQLSRV_FETCH_ASSOC)) {
+                                            echo '<tr>
+                                <td>' . htmlspecialchars($row["NAME"]) . '</td>
+                                <td>' . $row["QUANTITY"] . '</td>
+                            </tr>';
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
 
             </div>
         </div>
@@ -231,6 +372,106 @@ $resulttotal55 = sqlsrv_query($conn, $sql55);
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const stockData = <?php echo json_encode($productStocks); ?>;
+        const labels = <?php echo json_encode($productNames); ?>;
+
+        // Dynamic colors based on stock level
+        const barColors = stockData.map(qty => {
+            if (qty === 0) return 'rgba(220, 53, 69, 0.8)';     // Red
+            if (qty <= 5) return 'rgba(255, 193, 7, 0.8)';     // Orange
+            return 'rgba(40, 167, 69, 0.8)';                   // Green
+        });
+
+        const ctx = document.getElementById('stockChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Stock Quantity',
+                    data: stockData,
+                    backgroundColor: barColors,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const value = context.raw;
+                                if (value === 0) return ' Out of Stock';
+                                if (value <= 5) return ' Low Stock (' + value + ')';
+                                return ' In Stock (' + value + ')';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 5
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    <script>
+        const catLabels = <?php echo json_encode($categoryLabels); ?>;
+        const catData = <?php echo json_encode($categoryCounts); ?>;
+
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: catLabels,
+                datasets: [{
+                    data: catData,
+                    backgroundColor: [
+                        '#667eea',
+                        '#764ba2',
+                        '#f6ad55',
+                        '#48bb78',
+                        '#ed64a6',
+                        '#4299e1'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.label + ': ' + context.raw + ' products';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
+
+
+
 
 </body>
 

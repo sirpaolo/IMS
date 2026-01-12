@@ -17,11 +17,13 @@ $category = $_POST['category'];
 $description = $_POST['description'];
 $quantity = $_POST['quantity'];
 $price = $_POST['price'];
+$category_id = $_POST['category_id'];
 
 
 
-$sql = "INSERT INTO PRODUCTS(NAME, CATEGORY, DESCRIPTION, QUANTITY, PRICE) 
-    VALUES('$name', '$category', '$description', '$quantity', '$price')";
+
+$sql = "INSERT INTO PRODUCTS(NAME, CATEGORY_ID, DESCRIPTION, QUANTITY, PRICE) 
+    VALUES('$name', '$category_id', '$description', '$quantity', '$price')";
 
 $result = sqlsrv_query($conn, $sql);
 

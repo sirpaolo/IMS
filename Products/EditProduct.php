@@ -10,32 +10,30 @@ if (!$conn) {
     die(print_r(sqlsrv_errors(), true));
 }
 
-
 // Get product ID
 $id = $_POST['product_id'];
 
 // Get form data
 $name = $_POST['name'];
-$category = $_POST['category'];
+$category_id = $_POST['category_id'];
 $description = $_POST['description'];
 $quantity = $_POST['quantity'];
 $price = $_POST['price'];
 
-
-// Fetch product
+// Update product
 $sql = "UPDATE PRODUCTS
         SET 
             NAME = ?, 
-            CATEGORY = ?, 
+            CATEGORY_ID = ?, 
             DESCRIPTION = ?, 
             QUANTITY = ?, 
             PRICE = ?
         WHERE PRODUCT_ID = ?
-        ";
+";
 
 $params = [
     $name,
-    $category,
+    $category_id,
     $description,
     $quantity,
     $price,
