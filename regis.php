@@ -1,71 +1,66 @@
 <?php
-// regis.php 
-$serverName = "HELIOS";
-$connectionOptions = [
-    "Database" => "IMS",
-    "Uid" => "",
-    "PWD" => ""
-];
+// regis.php (MySQL version)
 
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-if ($conn == false) {
-    die(print_r(sqlsrv_errors(), true));
+// MySQL connection setup
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db = "ims"; // database name
+
+$conn = new mysqli($host, $user, $pass, $db);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
 
+// Get form data
 $name = $_POST['name'];
 $email = $_POST['email'];
 $password = $_POST['password'];
 $confirm_password = $_POST['confirm_password'];
 
-
-
-// Check if email exists
+// Check if email already exists
 $sql_check = "SELECT * FROM USERS WHERE EMAIL = ?";
-$result_check = sqlsrv_query($conn, $sql_check, [$email]);
-$row = sqlsrv_fetch_array($result_check, SQLSRV_FETCH_ASSOC);
-if ($row) {
+$stmt_check = $conn->prepare($sql_check);
+$stmt_check->bind_param("s", $email);
+$stmt_check->execute();
+$result_check = $stmt_check->get_result();
+
+if ($result_check->num_rows > 0) {
     echo "User email already exists";
-    sqlsrv_close($conn);
-    die();
+    $stmt_check->close();
+    $conn->close();
+    exit();
 }
 
-// Validation of password
-if ($password == $confirm_password) {
-    // Insert new user to database
-    $date = date('Y-m-d H:i:s'); // format: 2025-01-30 14:23:10
-    $sql_user = "INSERT INTO USERS (USERNAME, EMAIL, PASSWORD, ROLE, CREATED_AT) VALUES (?, ?, ?, ?, ?)";
-    $params = [$name, $email, $password, "user", $date];
-    $result_user = sqlsrv_query($conn, $sql_user, $params);
+// Validate password
+if ($password === $confirm_password) {
 
-    if ($result_user === false) {
+    // Insert new user
+    $date = date('Y-m-d H:i:s');
+
+    $sql_user = "INSERT INTO USERS (USERNAME, EMAIL, PASSWORD, ROLE, CREATED_AT)
+                 VALUES (?, ?, ?, ?, ?)";
+    $stmt_user = $conn->prepare($sql_user);
+
+    $role = "user";
+    $stmt_user->bind_param("sssss", $name, $email, $password, $role, $date);
+
+    if ($stmt_user->execute()) {
+        header("Location: /IMS/index.html");
+        exit();
+    } else {
         echo "Error inserting user";
-        sqlsrv_close($conn);
-        die(print_r(sqlsrv_errors(), true));
     }
 
-    // // Retrieve the newly inserted user's row (by email)
-    // $sql_get_user = "SELECT TOP 1 CUSTOMER_ID, NAME, EMAIL FROM ACCOUNTS WHERE EMAIL = ? ORDER BY CUSTOMER_ID DESC";
-    // $result_get_user = sqlsrv_query($conn, $sql_get_user, [$email]);
-    // if ($result_get_user === false) {
-    //     sqlsrv_close($conn);
-    //     die(print_r(sqlsrv_errors(), true));
-    // }
-    // $user_row = sqlsrv_fetch_array($result_get_user, SQLSRV_FETCH_ASSOC);
-
-    // if (!$user_row) {
-    //     sqlsrv_close($conn);
-    //     die("Failed to retrieve newly created user.");
-    // }
-
-    // sqlsrv_close($conn);
-
-
-    header("Location: /IMS/Pages/index.html");
-    exit();
+    $stmt_user->close();
 
 } else {
-    echo 'Password does not match';
-    sqlsrv_close($conn);
-    exit();
+    echo "Password does not match";
 }
+
+// Close connection
+$stmt_check->close();
+$conn->close();
 ?>

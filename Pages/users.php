@@ -1,17 +1,24 @@
 <?php
-$serverName = "HELIOS";
-$connectionOptions = [
-    "Database" => "IMS",
-    "Uid" => "",
-    "PWD" => ""
-];
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-if (!$conn) {
-    die(print_r(sqlsrv_errors(), true));
+// MySQL connection
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db = "ims"; // database name
+
+$conn = new mysqli($host, $user, $pass, $db);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
 
+// Fetch users
 $sql = "SELECT * FROM USERS";
-$result = sqlsrv_query($conn, $sql);
+$result = $conn->query($sql);
+
+if (!$result) {
+    die("Query failed: " . $conn->error);
+}
 ?>
 
 <!DOCTYPE html>
@@ -118,7 +125,7 @@ $result = sqlsrv_query($conn, $sql);
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) { ?>
+                                    <?php while ($row = $result->fetch_assoc()) { ?>
                                         <tr>
                                             <td><?= $row['USER_ID'] ?></td>
                                             <td><?= htmlspecialchars($row['USERNAME']) ?></td>

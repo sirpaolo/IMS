@@ -1,23 +1,44 @@
 <?php
-$serverName = "HELIOS";
-$connectionOptions = [
-    "Database" => "IMS",
-    "Uid" => "",
-    "PWD" => ""
-];
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-if (!$conn) {
-    die(print_r(sqlsrv_errors(), true));
+// MySQL connection
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db = "ims"; // database name
+
+$conn = new mysqli($host, $user, $pass, $db);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
 
+
+//   FETCH ORDERS
+
 $sql = "SELECT * FROM ORDERS ORDER BY ORDER_ID DESC";
-$result = sqlsrv_query($conn, $sql);
+$result = $conn->query($sql);
 
-// Fetch products for order dropdown
-$productSql = "SELECT PRODUCT_ID, NAME, PRICE, QUANTITY FROM PRODUCTS WHERE QUANTITY > 0";
-$productResult = sqlsrv_query($conn, $productSql);
+if (!$result) {
+    die("Query failed: " . $conn->error);
+}
 
-$sql = "SELECT 
+
+//   FETCH PRODUCTS (ORDER DROPDOWN)
+$productSql = "
+    SELECT PRODUCT_ID, NAME, PRICE, QUANTITY
+    FROM PRODUCTS
+    WHERE QUANTITY > 0
+";
+$productResult = $conn->query($productSql);
+
+if (!$productResult) {
+    die("Product query failed: " . $conn->error);
+}
+
+
+//   FETCH ORDERS WITH PRODUCT DETAILS
+$sql = "
+    SELECT 
         O.ORDER_ID,
         O.CUSTOMER_NAME,
         O.PRODUCT_ID,
@@ -31,13 +52,26 @@ $sql = "SELECT
     JOIN PRODUCTS P ON O.PRODUCT_ID = P.PRODUCT_ID
     ORDER BY O.ORDER_ID DESC
 ";
-$result = sqlsrv_query($conn, $sql);
+$result = $conn->query($sql);
 
-$editProductSql = "SELECT PRODUCT_ID, NAME, PRICE FROM PRODUCTS WHERE QUANTITY > 0";
-$editProductResult = sqlsrv_query($conn, $editProductSql);
+if (!$result) {
+    die("Order join query failed: " . $conn->error);
+}
 
 
+//   FETCH PRODUCTS FOR EDIT ORDER
+$editProductSql = "
+    SELECT PRODUCT_ID, NAME, PRICE
+    FROM PRODUCTS
+    WHERE QUANTITY > 0
+";
+$editProductResult = $conn->query($editProductSql);
+
+if (!$editProductResult) {
+    die("Edit product query failed: " . $conn->error);
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -158,13 +192,14 @@ $editProductResult = sqlsrv_query($conn, $editProductSql);
                             </thead>
 
                             <tbody>
-                                <?php while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) { ?>
+                                <?php while ($row = $result->fetch_assoc()) { ?>
                                     <tr>
                                         <td><?= $row['ORDER_ID'] ?></td>
                                         <td><?= htmlspecialchars($row['CUSTOMER_NAME']) ?></td>
                                         <td><?= htmlspecialchars($row['PRODUCT_NAME']) ?></td>
                                         <td><?= $row['QUANTITY'] ?></td>
-                                        <td><?= $row['ORDER_DATE']->format('Y-m-d') ?></td>
+                                        <td><?= date('Y-m-d', strtotime($row['ORDER_DATE'])) ?></td>
+
                                         <td>₱ <?= number_format($row['TOTAL_AMOUNT'], 2) ?></td>
                                         <td>
                                             <?php
@@ -248,7 +283,7 @@ $editProductResult = sqlsrv_query($conn, $editProductSql);
                                 <label class="form-label small text-muted">Product</label>
                                 <select name="product_id" id="productSelect" class="form-select" required>
                                     <option value="">Select product</option>
-                                    <?php while ($p = sqlsrv_fetch_array($productResult, SQLSRV_FETCH_ASSOC)) { ?>
+                                    <?php while ($p = $productResult->fetch_assoc()) { ?>
                                         <option value="<?= $p['PRODUCT_ID'] ?>" data-price="<?= $p['PRICE'] ?>"
                                             data-stock="<?= $p['QUANTITY'] ?>">
                                             <?= htmlspecialchars($p['NAME']) ?>
@@ -369,7 +404,7 @@ $editProductResult = sqlsrv_query($conn, $editProductSql);
                             <div class="col-12">
                                 <label class="form-label small text-muted">Product</label>
                                 <select name="product_id" id="edit_product" class="form-select" required>
-                                    <?php while ($p = sqlsrv_fetch_array($editProductResult, SQLSRV_FETCH_ASSOC)) { ?>
+                                    <?php while ($p = $editProductResult->fetch_assoc()) { ?>
                                         <option value="<?= $p['PRODUCT_ID'] ?>" data-price="<?= $p['PRICE'] ?>">
                                             <?= htmlspecialchars($p['NAME']) ?>
                                         </option>

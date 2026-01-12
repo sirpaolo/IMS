@@ -1,45 +1,59 @@
 <?php
+// MySQL connection setup
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db = "IMS"; // database name
 
-$serverName = "HELIOS";
-$connectionOptions = [
-    "Database" => "IMS",
-    "Uid" => "",
-    "PWD" => ""
-];
+$conn = new mysqli($host, $user, $pass, $db);
 
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-if ($conn == false) {
-    die(print_r(sqlsrv_errors(), true));
+// Check connection
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
 
+// Get form data
 $email = $_POST['email'];
 $password = $_POST['password'];
 
-// Find account by email only
+// Prepare SQL (MySQL version)
 $sql = "SELECT * FROM USERS WHERE EMAIL = ?";
-$result_check = sqlsrv_query($conn, $sql, [$email]);
-if ($result_check === false) {
-    sqlsrv_close($conn);
-    die(print_r(sqlsrv_errors(), true));
+$stmt = $conn->prepare($sql);
+
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
 }
 
-$row = sqlsrv_fetch_array($result_check, SQLSRV_FETCH_ASSOC);
+// Bind parameter
+$stmt->bind_param("s", $email);
 
+// Execute
+$stmt->execute();
+
+// Get result
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+
+// Check email
 if (!$row) {
     echo "Email not found";
-    sqlsrv_close($conn);
-    die();
+    $stmt->close();
+    $conn->close();
+    exit();
 }
 
-// check password and set session
-if ($password == $row['PASSWORD']) {
+// Check password (plain-text comparison – NOT recommended for production)
+if ($password === $row['PASSWORD']) {
 
+    // Redirect on success
     header("Location: /IMS/Pages/dashboard.php");
     exit();
 
 } else {
     echo "Incorrect password";
-    sqlsrv_close($conn);
-    exit();
 }
+
+// Close connections
+$stmt->close();
+$conn->close();
 ?>

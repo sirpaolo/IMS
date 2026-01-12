@@ -1,29 +1,43 @@
 <?php
-$serverName = "HELIOS";
-$connectionOptions = [
-    "Database" => "IMS",
-    "Uid" => "",
-    "PWD" => ""
-];
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-if (!$conn) {
-    die(print_r(sqlsrv_errors(), true));
+// deleteproduct.php (MySQL version)
+
+// MySQL connection
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db = "ims"; // database name
+
+$conn = new mysqli($host, $user, $pass, $db);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
 
 // Get product ID from URL
 $id = $_GET['id'];
 
-// Delete product
+// Prepare delete query
 $sql = "DELETE FROM PRODUCTS WHERE PRODUCT_ID = ?";
-$params = [$id];
+$stmt = $conn->prepare($sql);
 
-$stmt = sqlsrv_query($conn, $sql, $params);
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+}
 
-if ($stmt === false) {
-    die(print_r(sqlsrv_errors(), true));
+// Bind parameter
+$stmt->bind_param("i", $id);
+
+// Execute
+if (!$stmt->execute()) {
+    die("Delete failed: " . $stmt->error);
 }
 
 // Redirect back
 header("Location: /IMS/Pages/products.php");
-exit;
+exit();
+
+// Close
+$stmt->close();
+$conn->close();
 ?>

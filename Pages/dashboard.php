@@ -1,127 +1,94 @@
 <?php
-$serverName = "HELIOS";
-$connectionOptions = [
-    "Database" => "IMS",
-    "Uid" => "",
-    "PWD" => ""
-];
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-if ($conn == false) {
-    die(print_r(sqlsrv_errors(), true));
-} else {
-    echo "";
+// MySQL connection
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db = "ims"; // database name
+
+$conn = new mysqli($host, $user, $pass, $db);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
 
-// Fetch total products
-$sql = "SELECT * FROM PRODUCTS";
-$resultall = sqlsrv_query($conn, $sql);
+//   TOTAL PRODUCTS
+$result = $conn->query("SELECT COUNT(PRODUCT_ID) AS TOTAL FROM PRODUCTS");
+$row = $result->fetch_assoc();
+$totalproducts = $row['TOTAL'];
 
-$sql = "SELECT COUNT (PRODUCT_ID) AS TOTAL FROM PRODUCTS";
-$resulttotal = sqlsrv_query($conn, $sql);
-$resultarray = sqlsrv_fetch_array($resulttotal);
-$totalproducts = $resultarray["TOTAL"];
+//   TOTAL STOCK
+$result = $conn->query("SELECT SUM(QUANTITY) AS TOTAL FROM PRODUCTS");
+$row = $result->fetch_assoc();
+$totalstock = $row['TOTAL'];
 
-// Fetch total stock
-$sql11 = "SELECT * FROM PRODUCTS";
-$resultall11 = sqlsrv_query($conn, $sql11);
+//   TOTAL ORDERS
+$result = $conn->query("SELECT COUNT(ORDER_ID) AS TOTAL FROM ORDERS");
+$row = $result->fetch_assoc();
+$totalorders = $row['TOTAL'];
 
-$sql22 = "SELECT SUM (QUANTITY) AS TOTAL FROM PRODUCTS";
-$resulttotal22 = sqlsrv_query($conn, $sql22);
-$resultarray22 = sqlsrv_fetch_array($resulttotal22);
-$totalstock = $resultarray22["TOTAL"];
-
-// Fetch total orders
-$sqlorder = "SELECT * FROM ORDERS";
-$resultorder = sqlsrv_query($conn, $sqlorder);
-
-$sqlcountorder = "SELECT COUNT (ORDER_ID) AS TOTAL FROM ORDERS";
-$resultorder = sqlsrv_query($conn, $sqlcountorder);
-$resultorderarray = sqlsrv_fetch_array($resultorder);
-$totalorders = $resultorderarray["TOTAL"];
-
-
-// Low stock items count
-$sqlLowStock = "
-    SELECT COUNT (PRODUCT_ID) AS LOWSTOCKCOUNT
+//   LOW STOCK COUNT
+$result = $conn->query("
+    SELECT COUNT(PRODUCT_ID) AS LOWSTOCKCOUNT
     FROM PRODUCTS
     WHERE QUANTITY <= 5
-";
-$resultLowStock = sqlsrv_query($conn, $sqlLowStock);
-$resultLowStockArray = sqlsrv_fetch_array($resultLowStock);
-$lowStockCount = $resultLowStockArray["LOWSTOCKCOUNT"];
+");
+$row = $result->fetch_assoc();
+$lowStockCount = $row['LOWSTOCKCOUNT'];
 
-// Fetch revenue
-$sql33 = "SELECT * FROM ORDERS";
-$resultall33 = sqlsrv_query($conn, $sql33);
+//   TOTAL REVENUE
+$result = $conn->query("SELECT SUM(TOTAL_AMOUNT) AS TOTAL FROM ORDERS");
+$row = $result->fetch_assoc();
+$totalrevenue = $row['TOTAL'];
 
-$sql44 = "SELECT SUM (TOTAL_AMOUNT) AS TOTAL FROM ORDERS";
-$resulttotal44 = sqlsrv_query($conn, $sql44);
-$resultarray44 = sqlsrv_fetch_array($resulttotal44);
-$totalrevenue = $resultarray44["TOTAL"];
-
-// Product status
-// Low stock items
-$sql55 = "
-    SELECT 
-        NAME,
-        QUANTITY,
-        CASE
-            WHEN QUANTITY <= 5 THEN 'Low Stock'
-        END AS STATUS
+//   LOW STOCK ITEMS
+$resulttotal55 = $conn->query("
+    SELECT NAME, QUANTITY, 'Low Stock' AS STATUS
     FROM PRODUCTS
     WHERE QUANTITY BETWEEN 1 AND 5
-";
+");
 
-$resulttotal55 = sqlsrv_query($conn, $sql55);
-
-// Out of stock items
-$sqlOut = "
+//   OUT OF STOCK ITEMS
+$resultOut = $conn->query("
     SELECT NAME, QUANTITY
     FROM PRODUCTS
     WHERE QUANTITY = 0
-";
-$resultOut = sqlsrv_query($conn, $sqlOut);
+");
 
-
-// Fetch stock levels for chart
-$chartSql = "SELECT NAME, QUANTITY FROM PRODUCTS";
-$chartResult = sqlsrv_query($conn, $chartSql);
+//   STOCK LEVELS (CHART)
+$chartResult = $conn->query("SELECT NAME, QUANTITY FROM PRODUCTS");
 
 $productNames = [];
 $productStocks = [];
 
-while ($row = sqlsrv_fetch_array($chartResult, SQLSRV_FETCH_ASSOC)) {
+while ($row = $chartResult->fetch_assoc()) {
     $productNames[] = $row['NAME'];
     $productStocks[] = $row['QUANTITY'];
 }
 
-// Category-wise product count
-$sqlCatChart = "
+//   CATEGORY-WISE PRODUCT COUNT
+$resultCatChart = $conn->query("
     SELECT C.CATEGORY_NAME, COUNT(P.PRODUCT_ID) AS TOTAL
     FROM CATEGORIES C
     LEFT JOIN PRODUCTS P ON P.CATEGORY_ID = C.CATEGORY_ID
     GROUP BY C.CATEGORY_NAME
-";
-
-$resultCatChart = sqlsrv_query($conn, $sqlCatChart);
+");
 
 $categoryLabels = [];
 $categoryCounts = [];
 
-while ($row = sqlsrv_fetch_array($resultCatChart, SQLSRV_FETCH_ASSOC)) {
+while ($row = $resultCatChart->fetch_assoc()) {
     $categoryLabels[] = $row['CATEGORY_NAME'];
     $categoryCounts[] = $row['TOTAL'];
 }
 
-// Recently added products (latest 3)
-$sqlRecent = "
-    SELECT TOP 3 NAME, QUANTITY
+//   RECENT PRODUCTS (LATEST 3)
+$resultRecent = $conn->query("
+    SELECT NAME, QUANTITY
     FROM PRODUCTS
     ORDER BY PRODUCT_ID DESC
-";
-$resultRecent = sqlsrv_query($conn, $sqlRecent);
-
-
+    LIMIT 3
+");
 ?>
 
 
@@ -303,7 +270,7 @@ $resultRecent = sqlsrv_query($conn, $sqlRecent);
                                     </thead>
                                     <tbody>
                                         <?php
-                                        while ($row = sqlsrv_fetch_array($resulttotal55, SQLSRV_FETCH_ASSOC)) {
+                                        while ($row = $resulttotal55->fetch_assoc()) {
                                             echo '<tr>
                                 <td>' . htmlspecialchars($row["NAME"]) . '</td>
                                 <td>' . $row["QUANTITY"] . '</td>
@@ -331,7 +298,7 @@ $resultRecent = sqlsrv_query($conn, $sqlRecent);
                                     </thead>
                                     <tbody>
                                         <?php
-                                        while ($row = sqlsrv_fetch_array($resultOut, SQLSRV_FETCH_ASSOC)) {
+                                        while ($row = $resultOut->fetch_assoc()) {
                                             echo '<tr>
                                 <td>' . htmlspecialchars($row["NAME"]) . '</td>
                                 <td>0</td>
@@ -359,7 +326,7 @@ $resultRecent = sqlsrv_query($conn, $sqlRecent);
                                     </thead>
                                     <tbody>
                                         <?php
-                                        while ($row = sqlsrv_fetch_array($resultRecent, SQLSRV_FETCH_ASSOC)) {
+                                        while ($row = $resultRecent->fetch_assoc()) {
                                             echo '<tr>
                                 <td>' . htmlspecialchars($row["NAME"]) . '</td>
                                 <td>' . $row["QUANTITY"] . '</td>

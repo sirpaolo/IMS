@@ -1,37 +1,57 @@
 <?php
-// Addproduct.php 
-$serverName = "HELIOS";
-$connectionOptions = [
-    "Database" => "IMS",
-    "Uid" => "",
-    "PWD" => ""
-];
+// Addproduct.php (MySQL version)
 
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-if ($conn == false) {
-    die(print_r(sqlsrv_errors(), true));
+// MySQL connection
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db = "ims"; // database name
+
+$conn = new mysqli($host, $user, $pass, $db);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
 
+// Get form data
 $name = $_POST['name'];
-$category = $_POST['category'];
+$category_id = $_POST['category_id'];
 $description = $_POST['description'];
 $quantity = $_POST['quantity'];
 $price = $_POST['price'];
-$category_id = $_POST['category_id'];
 
+// Prepare SQL
+$sql = "
+    INSERT INTO PRODUCTS (NAME, CATEGORY_ID, DESCRIPTION, QUANTITY, PRICE)
+    VALUES (?, ?, ?, ?, ?)
+";
 
+$stmt = $conn->prepare($sql);
 
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
+}
 
-$sql = "INSERT INTO PRODUCTS(NAME, CATEGORY_ID, DESCRIPTION, QUANTITY, PRICE) 
-    VALUES('$name', '$category_id', '$description', '$quantity', '$price')";
+// Bind parameters
+$stmt->bind_param(
+    "sisid",
+    $name,        // s = string
+    $category_id, // i = integer
+    $description, // s = string
+    $quantity,    // i = integer
+    $price        // d = double
+);
 
-$result = sqlsrv_query($conn, $sql);
-
-if ($result) {
+// Execute
+if ($stmt->execute()) {
     header("Location: /IMS/Pages/products.php");
     exit();
 } else {
     echo "Insert Error";
 }
 
+// Close connections
+$stmt->close();
+$conn->close();
 ?>

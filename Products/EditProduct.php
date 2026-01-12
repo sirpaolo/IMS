@@ -1,13 +1,17 @@
 <?php
-$serverName = "HELIOS";
-$connectionOptions = [
-    "Database" => "IMS",
-    "Uid" => "",
-    "PWD" => ""
-];
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-if (!$conn) {
-    die(print_r(sqlsrv_errors(), true));
+// updateproduct.php (MySQL version)
+
+// MySQL connection
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db = "ims"; // database name
+
+$conn = new mysqli($host, $user, $pass, $db);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
 
 // Get product ID
@@ -20,32 +24,45 @@ $description = $_POST['description'];
 $quantity = $_POST['quantity'];
 $price = $_POST['price'];
 
-// Update product
-$sql = "UPDATE PRODUCTS
-        SET 
-            NAME = ?, 
-            CATEGORY_ID = ?, 
-            DESCRIPTION = ?, 
-            QUANTITY = ?, 
-            PRICE = ?
-        WHERE PRODUCT_ID = ?
+// Prepare update query
+$sql = "
+    UPDATE PRODUCTS
+    SET 
+        NAME = ?, 
+        CATEGORY_ID = ?, 
+        DESCRIPTION = ?, 
+        QUANTITY = ?, 
+        PRICE = ?
+    WHERE PRODUCT_ID = ?
 ";
 
-$params = [
-    $name,
-    $category_id,
-    $description,
-    $quantity,
-    $price,
-    $id
-];
+$stmt = $conn->prepare($sql);
 
-$stmt = sqlsrv_query($conn, $sql, $params);
-
-if ($stmt === false) {
-    die(print_r(sqlsrv_errors(), true));
+if (!$stmt) {
+    die("Prepare failed: " . $conn->error);
 }
 
+// Bind parameters
+$stmt->bind_param(
+    "sisidi",
+    $name,        // s
+    $category_id, // i
+    $description, // s
+    $quantity,    // i
+    $price,       // d
+    $id           // i
+);
+
+// Execute
+if (!$stmt->execute()) {
+    die("Update failed: " . $stmt->error);
+}
+
+// Redirect back
 header("Location: /IMS/Pages/products.php");
 exit();
+
+// Close connections
+$stmt->close();
+$conn->close();
 ?>

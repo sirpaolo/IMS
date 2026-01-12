@@ -1,15 +1,11 @@
 <?php
-// DB CONNECTION
-$serverName = "HELIOS";
-$connectionOptions = [
-    "Database" => "IMS",
-    "Uid" => "",
-    "PWD" => ""
-];
+// ============================
+// DATABASE CONNECTION (MySQL)
+// ============================
+$conn = new mysqli("localhost", "root", "", "IMS");
 
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-if (!$conn) {
-    die(print_r(sqlsrv_errors(), true));
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
 
 /* ==========================
@@ -17,57 +13,66 @@ if (!$conn) {
 ========================== */
 $customerName = $_POST['customer_name'];
 $orderDate = $_POST['order_date'] ?? date('Y-m-d');
-$productId = $_POST['product_id'];
-$quantity = (int) $_POST['quantity'];
+$productId = filter_input(INPUT_POST, 'product_id', FILTER_VALIDATE_INT);
+$quantity = filter_input(INPUT_POST, 'quantity', FILTER_VALIDATE_INT);
 $status = $_POST['status'];
+
+if (!$productId || !$quantity) {
+    die("Invalid product or quantity.");
+}
 
 /* ==========================
    CHECK AVAILABLE STOCK
 ========================== */
 $stockSql = "SELECT QUANTITY, PRICE FROM PRODUCTS WHERE PRODUCT_ID = ?";
-$stockStmt = sqlsrv_query($conn, $stockSql, [$productId]);
+$stockStmt = $conn->prepare($stockSql);
+$stockStmt->bind_param("i", $productId);
+$stockStmt->execute();
+$stockResult = $stockStmt->get_result();
 
-if ($stockStmt === false) {
-    die(print_r(sqlsrv_errors(), true));
-}
-
-$product = sqlsrv_fetch_array($stockStmt, SQLSRV_FETCH_ASSOC);
-
-if (!$product) {
+if ($stockResult->num_rows === 0) {
     die("Product not found.");
 }
+
+$product = $stockResult->fetch_assoc();
 
 if ($quantity > $product['QUANTITY']) {
     header("Location: /IMS/Pages/orders.php?error=insufficient_stock");
     exit;
 }
 
-
 /* ==========================
-   CALCULATE TOTAL (SERVER-SIDE)
+   CALCULATE TOTAL
 ========================== */
 $totalAmount = $product['PRICE'] * $quantity;
 
 /* ==========================
+   START TRANSACTION
+========================== */
+$conn->begin_transaction();
+
+/* ==========================
    INSERT ORDER
 ========================== */
-$sql = "
-    INSERT INTO ORDERS (CUSTOMER_NAME, ORDER_DATE, PRODUCT_ID, QUANTITY, TOTAL_AMOUNT, STATUS)
+$insertSql = "
+    INSERT INTO ORDERS 
+        (CUSTOMER_NAME, ORDER_DATE, PRODUCT_ID, QUANTITY, TOTAL_AMOUNT, STATUS)
     VALUES (?, ?, ?, ?, ?, ?)
 ";
-
-$params = [
+$insertStmt = $conn->prepare($insertSql);
+$insertStmt->bind_param(
+    "ssidis",
     $customerName,
     $orderDate,
     $productId,
     $quantity,
     $totalAmount,
     $status
-];
+);
 
-$stmt = sqlsrv_query($conn, $sql, $params);
-if ($stmt === false) {
-    die(print_r(sqlsrv_errors(), true));
+if (!$insertStmt->execute()) {
+    $conn->rollback();
+    die("Failed to insert order.");
 }
 
 /* ==========================
@@ -78,13 +83,18 @@ $updateStockSql = "
     SET QUANTITY = QUANTITY - ?
     WHERE PRODUCT_ID = ?
 ";
+$updateStmt = $conn->prepare($updateStockSql);
+$updateStmt->bind_param("ii", $quantity, $productId);
 
-$stockParams = [$quantity, $productId];
-$updateStmt = sqlsrv_query($conn, $updateStockSql, $stockParams);
-
-if ($updateStmt === false) {
-    die(print_r(sqlsrv_errors(), true));
+if (!$updateStmt->execute()) {
+    $conn->rollback();
+    die("Failed to update stock.");
 }
+
+/* ==========================
+   COMMIT TRANSACTION
+========================== */
+$conn->commit();
 
 /* ==========================
    REDIRECT

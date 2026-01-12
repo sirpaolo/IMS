@@ -1,63 +1,96 @@
 <?php
-$serverName = "HELIOS";
-$connectionOptions = [
-    "Database" => "IMS",
-    "Uid" => "",
-    "PWD" => ""
-];
+// ============================
+// DATABASE CONNECTION
+// ============================
+$conn = new mysqli("localhost", "root", "", "IMS");
 
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-if (!$conn) {
-    die(print_r(sqlsrv_errors(), true));
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
 
-$order_id = $_POST['order_id'];
+// ============================
+// GET FORM DATA
+// ============================
+$order_id = filter_input(INPUT_POST, 'order_id', FILTER_VALIDATE_INT);
 $customer_name = $_POST['customer_name'];
-$product_id = $_POST['product_id'];
-$quantity = $_POST['quantity'];
+$product_id = filter_input(INPUT_POST, 'product_id', FILTER_VALIDATE_INT);
+$quantity = filter_input(INPUT_POST, 'quantity', FILTER_VALIDATE_INT);
 $status = $_POST['status'];
 
+if (!$order_id || !$product_id || !$quantity) {
+    die("Invalid input.");
+}
 
 /* ==========================
-   Lock Completed Orders
+   LOCK COMPLETED ORDERS
 ========================== */
-$check = sqlsrv_query(
-    $conn,
-    "SELECT STATUS FROM ORDERS WHERE ORDER_ID = ?",
-    [$order_id]
+$checkStmt = $conn->prepare(
+    "SELECT STATUS FROM ORDERS WHERE ORDER_ID = ?"
 );
-$order = sqlsrv_fetch_array($check, SQLSRV_FETCH_ASSOC);
+$checkStmt->bind_param("i", $order_id);
+$checkStmt->execute();
+$checkResult = $checkStmt->get_result();
+
+if ($checkResult->num_rows === 0) {
+    die("Order not found.");
+}
+
+$order = $checkResult->fetch_assoc();
 
 if ($order['STATUS'] === 'Completed') {
     header("Location: /IMS/Pages/order.php?locked=1");
     exit();
 }
 
-
 /* ==========================
-   Get Product Price
+   GET PRODUCT PRICE
 ========================== */
-$priceStmt = sqlsrv_query(
-    $conn,
-    "SELECT PRICE FROM PRODUCTS WHERE PRODUCT_ID = ?",
-    [$product_id]
+$priceStmt = $conn->prepare(
+    "SELECT PRICE FROM PRODUCTS WHERE PRODUCT_ID = ?"
 );
-$product = sqlsrv_fetch_array($priceStmt, SQLSRV_FETCH_ASSOC);
+$priceStmt->bind_param("i", $product_id);
+$priceStmt->execute();
+$priceResult = $priceStmt->get_result();
+
+if ($priceResult->num_rows === 0) {
+    die("Product not found.");
+}
+
+$product = $priceResult->fetch_assoc();
 $price = $product['PRICE'];
 
 $total = $price * $quantity;
 
 /* ==========================
-   Update Order
+   UPDATE ORDER
 ========================== */
-$sql = "UPDATE ORDERS
-        SET CUSTOMER_NAME = ?, PRODUCT_ID = ?, QUANTITY = ?, TOTAL_AMOUNT = ?, STATUS = ?
-        WHERE ORDER_ID = ?";
+$updateStmt = $conn->prepare("
+    UPDATE ORDERS
+    SET 
+        CUSTOMER_NAME = ?, 
+        PRODUCT_ID = ?, 
+        QUANTITY = ?, 
+        TOTAL_AMOUNT = ?, 
+        STATUS = ?
+    WHERE ORDER_ID = ?
+");
 
-$params = [$customer_name, $product_id, $quantity, $total, $status, $order_id];
+$updateStmt->bind_param(
+    "siidsi",
+    $customer_name,
+    $product_id,
+    $quantity,
+    $total,
+    $status,
+    $order_id
+);
 
-sqlsrv_query($conn, $sql, $params);
+if (!$updateStmt->execute()) {
+    die("Failed to update order.");
+}
 
+// ============================
+// REDIRECT
+// ============================
 header("Location: /IMS/Pages/orders.php");
 exit();
-?>

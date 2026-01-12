@@ -1,19 +1,21 @@
 <?php
-$serverName = "HELIOS";
-$connectionOptions = [
-    "Database" => "IMS",
-    "Uid" => "",
-    "PWD" => ""
-];
-$conn = sqlsrv_connect($serverName, $connectionOptions);
-if ($conn == false) {
-    die(print_r(sqlsrv_errors(), true));
-} else {
-    echo "";
+// MySQL connection
+$host = "localhost";
+$user = "root";
+$pass = "";
+$db = "ims"; // database name
+
+$conn = new mysqli($host, $user, $pass, $db);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Database connection failed: " . $conn->connect_error);
 }
 
 
-$sql = "SELECT 
+//   FETCH PRODUCTS WITH CATEGORY
+$sql = "
+    SELECT 
         P.PRODUCT_ID,
         P.NAME,
         P.CATEGORY_ID,
@@ -25,25 +27,27 @@ $sql = "SELECT
     JOIN CATEGORIES C 
         ON P.CATEGORY_ID = C.CATEGORY_ID
 ";
-$resultall = sqlsrv_query($conn, $sql);
 
+$resultall = $conn->query($sql);
 
-$sql2 = "SELECT COUNT (PRODUCT_ID) AS TOTAL FROM PRODUCTS";
-$resulttotal = sqlsrv_query($conn, $sql2);
-$resultarray = sqlsrv_fetch_array($resulttotal);
-$totalcount = $resultarray["TOTAL"];
+//   TOTAL PRODUCT COUNT
+$sql2 = "SELECT COUNT(PRODUCT_ID) AS TOTAL FROM PRODUCTS";
+$resulttotal = $conn->query($sql2);
+$row = $resulttotal->fetch_assoc();
+$totalcount = $row['TOTAL'];
 
+//   FETCH CATEGORIES (ID + NAME)
 $catSql = "SELECT CATEGORY_ID, CATEGORY_NAME FROM CATEGORIES";
-$catResult = sqlsrv_query($conn, $catSql);
-$categories = [];
+$catResult = $conn->query($catSql);
 
-while ($cat = sqlsrv_fetch_array($catResult, SQLSRV_FETCH_ASSOC)) {
+$categories = [];
+while ($cat = $catResult->fetch_assoc()) {
     $categories[] = $cat;
 }
 
+//   FETCH CATEGORY NAMES ONLY
 $sql3 = "SELECT CATEGORY_NAME FROM CATEGORIES";
-$resultsql3 = sqlsrv_query($conn, $sql3);
-
+$resultsql3 = $conn->query($sql3);
 
 ?>
 
@@ -172,7 +176,7 @@ $resultsql3 = sqlsrv_query($conn, $sql3);
                             </thead>
                             <tbody>
                                 <?php
-                                while ($row = sqlsrv_fetch_array($resultall, SQLSRV_FETCH_ASSOC)) {
+                                while ($row = $resultall->fetch_assoc()) {
 
                                     $data1 = $row["PRODUCT_ID"];
                                     $data2 = $row["NAME"];
