@@ -30,6 +30,16 @@ $resulttotal22 = sqlsrv_query($conn, $sql22);
 $resultarray22 = sqlsrv_fetch_array($resulttotal22);
 $totalstock = $resultarray22["TOTAL"];
 
+// Fetch total orders
+$sqlorder = "SELECT * FROM ORDERS";
+$resultorder = sqlsrv_query($conn, $sqlorder);
+
+$sqlcountorder = "SELECT COUNT (ORDER_ID) AS TOTAL FROM ORDERS";
+$resultorder = sqlsrv_query($conn, $sqlcountorder);
+$resultorderarray = sqlsrv_fetch_array($resultorder);
+$totalorders = $resultorderarray["TOTAL"];
+
+
 // Low stock items count
 $sqlLowStock = "
     SELECT COUNT (PRODUCT_ID) AS LOWSTOCKCOUNT
@@ -41,10 +51,10 @@ $resultLowStockArray = sqlsrv_fetch_array($resultLowStock);
 $lowStockCount = $resultLowStockArray["LOWSTOCKCOUNT"];
 
 // Fetch revenue
-$sql33 = "SELECT * FROM PRODUCTS";
+$sql33 = "SELECT * FROM ORDERS";
 $resultall33 = sqlsrv_query($conn, $sql33);
 
-$sql44 = "SELECT SUM (PRICE * QUANTITY) AS TOTAL FROM PRODUCTS";
+$sql44 = "SELECT SUM (TOTAL_AMOUNT) AS TOTAL FROM ORDERS";
 $resulttotal44 = sqlsrv_query($conn, $sql44);
 $resultarray44 = sqlsrv_fetch_array($resulttotal44);
 $totalrevenue = $resultarray44["TOTAL"];
@@ -188,7 +198,7 @@ $resultRecent = sqlsrv_query($conn, $sqlRecent);
             <a href="/IMS/Pages/products.php">Products</a>
             <a href="/IMS/Pages/category.php">Categories</a>
             <a href="/IMS/Pages/orders.php">Orders</a>
-            <a href="#">Users</a>
+            <a href="/IMS/Pages/users.php">Users</a>
             <a href="/IMS/index.html">Logout</a>
         </div>
 
@@ -233,10 +243,10 @@ $resultRecent = sqlsrv_query($conn, $sqlRecent);
 
                     <div class="col-md-3">
                         <div class="card p-3">
-                            <p class="text-muted mb-1">Low Stock Items</p>
-                            <div class="stat-number text-danger">
+                            <p class="text-muted mb-1">Orders</p>
+                            <div class="stat-number">
 
-                                <?php echo $lowStockCount; ?>
+                                <?php echo $totalorders; ?>
                             </div>
                         </div>
                     </div>
@@ -258,7 +268,7 @@ $resultRecent = sqlsrv_query($conn, $sqlRecent);
                     <div class="col-md-4">
                         <div class="card p-4 h-100">
                             <h5 class="mb-3">Category-wise Products</h5><br>
-                            <div class="d-flex justify-content-center align-items-center" style="height: 220px;">
+                            <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
                                 <canvas id="categoryChart" width="180" height="180"></canvas>
                             </div>
                         </div>
@@ -268,7 +278,7 @@ $resultRecent = sqlsrv_query($conn, $sqlRecent);
                     <div class="col-md-8">
                         <div class="card p-4 h-100">
                             <h5 class="mb-3">Stock Levels by Product</h5>
-                            <canvas id="stockChart" height="240"></canvas>
+                            <canvas id="stockChart" height="220"></canvas>
                         </div>
                     </div>
 

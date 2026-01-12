@@ -14,12 +14,13 @@ $sql = "SELECT * FROM ORDERS ORDER BY ORDER_ID DESC";
 $result = sqlsrv_query($conn, $sql);
 
 // Fetch products for order dropdown
-$productSql = "SELECT PRODUCT_ID, NAME, PRICE FROM PRODUCTS WHERE QUANTITY > 0";
+$productSql = "SELECT PRODUCT_ID, NAME, PRICE, QUANTITY FROM PRODUCTS WHERE QUANTITY > 0";
 $productResult = sqlsrv_query($conn, $productSql);
 
 $sql = "SELECT 
         O.ORDER_ID,
         O.CUSTOMER_NAME,
+        O.PRODUCT_ID,
         O.ORDER_DATE,
         O.QUANTITY,
         O.TOTAL_AMOUNT,
@@ -31,6 +32,9 @@ $sql = "SELECT
     ORDER BY O.ORDER_ID DESC
 ";
 $result = sqlsrv_query($conn, $sql);
+
+$editProductSql = "SELECT PRODUCT_ID, NAME, PRICE FROM PRODUCTS WHERE QUANTITY > 0";
+$editProductResult = sqlsrv_query($conn, $editProductSql);
 
 
 ?>
@@ -91,7 +95,7 @@ $result = sqlsrv_query($conn, $sql);
             <a href="/IMS/Pages/products.php">Products</a>
             <a href="/IMS/Pages/category.php">Categories</a>
             <a href="#" class="active">Orders</a>
-            <a href="#">Users</a>
+            <a href="/IMS/Pages/users.php">Users</a>
             <a href="/IMS/index.html">Logout</a>
         </div>
 
@@ -109,6 +113,15 @@ $result = sqlsrv_query($conn, $sql);
             </nav>
 
             <div class="content">
+                <?php if (isset($_GET['error']) && $_GET['error'] === 'insufficient_stock') { ?>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Insufficient Stock!</strong>
+                        The quantity you entered exceeds the available stock.
+                        Please adjust the order quantity.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                <?php } ?>
+
 
                 <!-- ORDERS TABLE -->
                 <div class="card p-4">
@@ -170,13 +183,20 @@ $result = sqlsrv_query($conn, $sql);
                                             <div class="d-flex gap-2">
 
                                                 <!-- EDIT -->
-                                                <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
+                                                <?php $isCompleted = ($row['STATUS'] === 'Completed'); ?>
+
+                                                <button class="btn btn-sm btn-warning <?= $isCompleted ? 'disabled' : '' ?>"
+                                                    <?= $isCompleted ? 'disabled' : '' ?> data-bs-toggle="modal"
                                                     data-bs-target="#editOrderModal" data-id="<?= $row['ORDER_ID'] ?>"
                                                     data-customer="<?= htmlspecialchars($row['CUSTOMER_NAME'], ENT_QUOTES) ?>"
+                                                    data-product="<?= htmlspecialchars($row['PRODUCT_NAME'], ENT_QUOTES) ?>"
+                                                    data-product-id="<?= $row['PRODUCT_ID'] ?>"
                                                     data-quantity="<?= $row['QUANTITY'] ?>"
                                                     data-status="<?= $row['STATUS'] ?>">
                                                     Edit
                                                 </button>
+
+
 
                                                 <!-- DELETE -->
                                                 <a href="/IMS/Order/DeleteOrder.php?id=<?= $row['ORDER_ID'] ?>"
@@ -229,9 +249,11 @@ $result = sqlsrv_query($conn, $sql);
                                 <select name="product_id" id="productSelect" class="form-select" required>
                                     <option value="">Select product</option>
                                     <?php while ($p = sqlsrv_fetch_array($productResult, SQLSRV_FETCH_ASSOC)) { ?>
-                                        <option value="<?= $p['PRODUCT_ID'] ?>" data-price="<?= $p['PRICE'] ?>">
+                                        <option value="<?= $p['PRODUCT_ID'] ?>" data-price="<?= $p['PRICE'] ?>"
+                                            data-stock="<?= $p['QUANTITY'] ?>">
                                             <?= htmlspecialchars($p['NAME']) ?>
                                         </option>
+
                                     <?php } ?>
                                 </select>
                             </div>
@@ -247,6 +269,7 @@ $result = sqlsrv_query($conn, $sql);
                                 <label class="form-label small text-muted">Quantity</label>
                                 <input type="number" name="quantity" id="quantity" class="form-control" min="1"
                                     required>
+
                             </div>
 
                             <!-- Total -->
@@ -319,6 +342,188 @@ $result = sqlsrv_query($conn, $sql);
     </script>
 
     <!-- EDIT ORDER MODAL -->
+    <div class="modal fade" id="editOrderModal" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-sm">
+
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title fw-semibold">Edit Order</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body pt-2">
+                    <form action="/IMS/Order/UpdateOrder.php" method="POST">
+
+                        <input type="hidden" name="order_id" id="edit_order_id">
+
+                        <div class="row g-3">
+
+                            <!-- Customer -->
+                            <div class="col-12">
+                                <label class="form-label small text-muted">Customer Name</label>
+                                <input type="text" name="customer_name" id="edit_customer" class="form-control"
+                                    required>
+                            </div>
+
+                            <!-- Product -->
+                            <div class="col-12">
+                                <label class="form-label small text-muted">Product</label>
+                                <select name="product_id" id="edit_product" class="form-select" required>
+                                    <?php while ($p = sqlsrv_fetch_array($editProductResult, SQLSRV_FETCH_ASSOC)) { ?>
+                                        <option value="<?= $p['PRODUCT_ID'] ?>" data-price="<?= $p['PRICE'] ?>">
+                                            <?= htmlspecialchars($p['NAME']) ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+
+                            </div>
+
+                            <!-- Price -->
+                            <div class="col-6">
+                                <label class="form-label small text-muted">Price</label>
+                                <input type="text" id="edit_price" class="form-control" readonly>
+                            </div>
+
+                            <!-- Quantity -->
+                            <div class="col-6">
+                                <label class="form-label small text-muted">Quantity</label>
+                                <input type="number" name="quantity" id="edit_quantity" class="form-control" min="1"
+                                    required>
+                            </div>
+
+                            <!-- Total -->
+                            <div class="col-12">
+                                <label class="form-label small text-muted">Total</label>
+                                <input type="text" id="edit_total" class="form-control" readonly>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="col-12">
+                                <label class="form-label small text-muted">Payment Status</label>
+                                <select name="status" id="edit_status" class="form-select" required>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+
+
+                        </div>
+
+                        <div class="modal-footer border-0 px-0 pt-3">
+                            <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-sm btn-warning px-4">
+                                Update
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const editModal = document.getElementById('editOrderModal');
+
+        editModal.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+
+            const orderId = btn.dataset.id;
+            const customer = btn.dataset.customer;
+            const productId = btn.dataset.productId;
+            const quantity = btn.dataset.quantity;
+
+            document.getElementById('edit_order_id').value = orderId;
+            document.getElementById('edit_customer').value = customer;
+            document.getElementById('edit_product').value = productId;
+            document.getElementById('edit_quantity').value = quantity;
+
+            updateEditPrice();
+        });
+
+        const editProduct = document.getElementById('edit_product');
+        const editQty = document.getElementById('edit_quantity');
+        const editPrice = document.getElementById('edit_price');
+        const editTotal = document.getElementById('edit_total');
+
+        editProduct.addEventListener('change', updateEditPrice);
+        editQty.addEventListener('input', updateEditTotal);
+
+        function updateEditPrice() {
+            const price = editProduct.options[editProduct.selectedIndex].dataset.price || 0;
+            editPrice.value = price;
+            updateEditTotal();
+        }
+
+        function updateEditTotal() {
+            const price = parseFloat(editPrice.value) || 0;
+            const qty = parseInt(editQty.value) || 0;
+            editTotal.value = (price * qty).toFixed(2);
+        }
+    </script>
+
+    <script>
+        // Fill data in Edit Order Modal
+        document.getElementById('editOrderModal')
+            .addEventListener('show.bs.modal', function (event) {
+
+                let button = event.relatedTarget;
+
+                let id = button.getAttribute('data-id');
+                let customer = button.getAttribute('data-customer');
+                let productId = button.getAttribute('data-product-id');
+                let quantity = button.getAttribute('data-quantity');
+                let status = button.getAttribute('data-status');
+
+                document.getElementById('edit_order_id').value = id;
+                document.getElementById('edit_customer').value = customer;
+                document.getElementById('edit_product').value = productId;
+                document.getElementById('edit_quantity').value = quantity;
+                document.getElementById('edit_status').value = status;
+
+                updateEditPrice();
+            });
+    </script>
+
+    <script> //max quantity
+        const productSelect = document.getElementById('productSelect');
+        const qtyInput = document.getElementById('quantity');
+        const priceInput = document.getElementById('price');
+        const totalInput = document.getElementById('total');
+
+        productSelect.addEventListener('change', function () {
+            const selected = this.options[this.selectedIndex];
+
+            const price = selected.getAttribute('data-price') || 0;
+            const stock = selected.getAttribute('data-stock') || 0;
+
+            priceInput.value = price;
+            qtyInput.max = stock;
+            qtyInput.value = 1;
+
+            calculateTotal();
+        });
+
+        qtyInput.addEventListener('input', function () {
+            if (parseInt(this.value) > parseInt(this.max)) {
+                this.value = this.max;
+            }
+            calculateTotal();
+        });
+
+        function calculateTotal() {
+            const price = parseFloat(priceInput.value) || 0;
+            const qty = parseInt(qtyInput.value) || 0;
+            totalInput.value = (price * qty).toFixed(2);
+        }
+    </script>
+
+
+
 
 
 

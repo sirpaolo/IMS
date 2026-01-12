@@ -122,7 +122,7 @@ $resultsql3 = sqlsrv_query($conn, $sql3);
             <a href="#" class="active">Products</a>
             <a href="/IMS/Pages/category.php">Categories</a>
             <a href="/IMS/Pages/orders.php">Orders</a>
-            <a href="#">Users</a>
+            <a href="/IMS/Pages/users.php">Users</a>
             <a href="/IMS/index.html">Logout</a>
         </div>
 

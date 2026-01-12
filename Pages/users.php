@@ -10,7 +10,7 @@ if (!$conn) {
     die(print_r(sqlsrv_errors(), true));
 }
 
-$sql = "SELECT * FROM CATEGORIES";
+$sql = "SELECT * FROM USERS";
 $result = sqlsrv_query($conn, $sql);
 ?>
 
@@ -19,7 +19,7 @@ $result = sqlsrv_query($conn, $sql);
 
 <head>
     <meta charset="UTF-8">
-    <title>Categories</title>
+    <title>Users</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -69,9 +69,9 @@ $result = sqlsrv_query($conn, $sql);
             <h4 class="text-center text-white mb-4">INVENTORY MS</h4>
             <a href="/IMS/Pages/dashboard.php">Dashboard</a>
             <a href="/IMS/Pages/products.php">Products</a>
-            <a href="#" class="active">Categories</a>
+            <a href="/IMS/Pages/categories.php">Categories</a>
             <a href="/IMS/Pages/orders.php">Orders</a>
-            <a href="/IMS/Pages/users.php">Users</a>
+            <a href="#" class="active">Users</a>
             <a href="/IMS/index.html">Logout</a>
         </div>
 
@@ -81,60 +81,62 @@ $result = sqlsrv_query($conn, $sql);
             <!-- TOP NAVBAR -->
             <nav class="navbar navbar-light bg-white shadow-sm px-4">
                 <span class="navbar-brand mb-0 h5">
-                    Categories
+                    Users
                 </span>
                 <span class="fw-semibold">
                     Welcome, Admin
                 </span>
-
             </nav>
+
             <div class="content">
-
                 <div class="row justify-content-start">
-                    <div class="col-md-6 col-lg-5">
-
+                    <div class="col-md-8 col-lg-7">
                         <div class="card p-4">
 
                             <!-- TITLE -->
-                            <h2 class="mb-3">Category List</h2>
+                            <h2 class="mb-3">User List</h2>
 
                             <!-- ACTION + SEARCH -->
                             <div class="d-flex align-items-center gap-3 mb-3">
-                                <input type="text" id="categorySearch" class="form-control search-input "
-                                    style="max-width: 220px;" placeholder="Search category...">
+                                <input type="text" id="userSearch" class="form-control" style="max-width: 240px;"
+                                    placeholder="Search user...">
 
-                                <button class="btn btn-primary" data-bs-toggle="modal"
-                                    data-bs-target="#addCategoryModal">
-                                    + Add Category
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                                    + Add User
                                 </button>
                             </div>
 
                             <!-- TABLE -->
-                            <table class="table align-middle mb-3" id="categoryTable">
+                            <table class="table align-middle mb-3" id="userTable">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
-                                        <th>Category Name</th>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) { ?>
                                         <tr>
-                                            <td><?= $row['CATEGORY_ID'] ?></td>
-                                            <td><?= htmlspecialchars($row['CATEGORY_NAME']) ?></td>
+                                            <td><?= $row['USER_ID'] ?></td>
+                                            <td><?= htmlspecialchars($row['USERNAME']) ?></td>
+                                            <td><?= htmlspecialchars($row['EMAIL']) ?></td>
+                                            <td><?= htmlspecialchars($row['ROLE']) ?></td>
                                             <td>
                                                 <div class="d-flex gap-2">
                                                     <button class="btn btn-sm btn-warning" data-bs-toggle="modal"
-                                                        data-bs-target="#editCategoryModal"
-                                                        data-id="<?= $row['CATEGORY_ID'] ?>"
-                                                        data-name="<?= htmlspecialchars($row['CATEGORY_NAME'], ENT_QUOTES) ?>">
+                                                        data-bs-target="#editUserModal" data-id="<?= $row['USER_ID'] ?>"
+                                                        data-username="<?= htmlspecialchars($row['USERNAME'], ENT_QUOTES) ?>"
+                                                        data-email="<?= htmlspecialchars($row['EMAIL'], ENT_QUOTES) ?>"
+                                                        data-role="<?= htmlspecialchars($row['ROLE'], ENT_QUOTES) ?>">
                                                         Edit
                                                     </button>
 
-                                                    <a href="/IMS/Category/DeleteCategory.php?id=<?= $row['CATEGORY_ID'] ?>"
+                                                    <a href="/IMS/Users/DeleteUser.php?id=<?= $row['USER_ID'] ?>"
                                                         class="btn btn-sm btn-danger"
-                                                        onclick="return confirm('Delete this category?')">
+                                                        onclick="return confirm('Delete this user?')">
                                                         Delete
                                                     </a>
                                                 </div>
@@ -147,25 +149,35 @@ $result = sqlsrv_query($conn, $sql);
                         </div>
                     </div>
                 </div>
-
-
             </div>
-        </div>
 
+        </div>
     </div>
 
-    <!-- ADD CATEGORY MODAL -->
-    <div class="modal fade" id="addCategoryModal">
+    <!-- ADD USER MODAL -->
+    <div class="modal fade" id="addUserModal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form action="/IMS/Category/AddCategory.php" method="POST">
+                <form action="/IMS/Users/AddUser.php" method="POST">
                     <div class="modal-header">
-                        <h5>Add Category</h5>
+                        <h5>Add User</h5>
                         <button class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <label class="form-label">Category Name</label>
-                        <input type="text" name="category_name" class="form-control" required>
+                        <label class="form-label">Username</label>
+                        <input type="text" name="username" class="form-control" required>
+
+                        <label class="form-label mt-2">Email</label>
+                        <input type="email" name="email" class="form-control" required>
+
+                        <label class="form-label mt-2">Role</label>
+                        <select name="role" class="form-control" required>
+                            <option value="Admin">Admin</option>
+                            <option value="Staff">Staff</option>
+                        </select>
+
+                        <label class="form-label mt-2">Password</label>
+                        <input type="password" name="password" class="form-control" required>
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -176,19 +188,29 @@ $result = sqlsrv_query($conn, $sql);
         </div>
     </div>
 
-    <!-- EDIT CATEGORY MODAL -->
-    <div class="modal fade" id="editCategoryModal">
+    <!-- EDIT USER MODAL -->
+    <div class="modal fade" id="editUserModal">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form action="/IMS/Category/EditCategory.php" method="POST">
-                    <input type="hidden" name="category_id" id="edit_id">
+                <form action="/IMS/Users/EditUser.php" method="POST">
+                    <input type="hidden" name="user_id" id="edit_id">
+
                     <div class="modal-header">
-                        <h5>Edit Category</h5>
+                        <h5>Edit User</h5>
                         <button class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <label class="form-label">Category Name</label>
-                        <input type="text" name="category_name" id="edit_name" class="form-control" required>
+                        <label class="form-label">Username</label>
+                        <input type="text" name="username" id="edit_username" class="form-control" required>
+
+                        <label class="form-label mt-2">Email</label>
+                        <input type="email" name="email" id="edit_email" class="form-control" required>
+
+                        <label class="form-label mt-2">Role</label>
+                        <select name="role" id="edit_role" class="form-control" required>
+                            <option value="Admin">Admin</option>
+                            <option value="Staff">Staff</option>
+                        </select>
                     </div>
                     <div class="modal-footer">
                         <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -200,24 +222,26 @@ $result = sqlsrv_query($conn, $sql);
     </div>
 
     <script>
-        document.getElementById('editCategoryModal')
+        document.getElementById('editUserModal')
             .addEventListener('show.bs.modal', function (event) {
                 let btn = event.relatedTarget;
                 document.getElementById('edit_id').value = btn.getAttribute('data-id');
-                document.getElementById('edit_name').value = btn.getAttribute('data-name');
+                document.getElementById('edit_username').value = btn.getAttribute('data-username');
+                document.getElementById('edit_email').value = btn.getAttribute('data-email');
+                document.getElementById('edit_role').value = btn.getAttribute('data-role');
             });
     </script>
+
     <script>
-        document.getElementById('categorySearch').addEventListener('input', function () {
+        document.getElementById('userSearch').addEventListener('input', function () {
             const value = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#categoryTable tbody tr');
+            const rows = document.querySelectorAll('#userTable tbody tr');
 
             rows.forEach(row => {
                 row.style.display = row.innerText.toLowerCase().includes(value) ? '' : 'none';
             });
         });
     </script>
-
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

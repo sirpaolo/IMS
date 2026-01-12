@@ -16,7 +16,7 @@ $email = $_POST['email'];
 $password = $_POST['password'];
 
 // Find account by email only
-$sql = "SELECT * FROM ACCOUNTS WHERE EMAIL = ?";
+$sql = "SELECT * FROM USERS WHERE EMAIL = ?";
 $result_check = sqlsrv_query($conn, $sql, [$email]);
 if ($result_check === false) {
     sqlsrv_close($conn);

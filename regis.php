@@ -20,7 +20,7 @@ $confirm_password = $_POST['confirm_password'];
 
 
 // Check if email exists
-$sql_check = "SELECT * FROM ACCOUNTS WHERE EMAIL = ?";
+$sql_check = "SELECT * FROM USERS WHERE EMAIL = ?";
 $result_check = sqlsrv_query($conn, $sql_check, [$email]);
 $row = sqlsrv_fetch_array($result_check, SQLSRV_FETCH_ASSOC);
 if ($row) {
@@ -33,8 +33,8 @@ if ($row) {
 if ($password == $confirm_password) {
     // Insert new user to database
     $date = date('Y-m-d H:i:s'); // format: 2025-01-30 14:23:10
-    $sql_user = "INSERT INTO ACCOUNTS (NAME, EMAIL, PASSWORD, DATE_TIME) VALUES (?, ?, ?, ?)";
-    $params = [$name, $email, $password, $date];
+    $sql_user = "INSERT INTO USERS (USERNAME, EMAIL, PASSWORD, ROLE, CREATED_AT) VALUES (?, ?, ?, ?, ?)";
+    $params = [$name, $email, $password, "user", $date];
     $result_user = sqlsrv_query($conn, $sql_user, $params);
 
     if ($result_user === false) {
@@ -60,7 +60,7 @@ if ($password == $confirm_password) {
     // sqlsrv_close($conn);
 
 
-    header("Location: /IMS/Pages/index.php");
+    header("Location: /IMS/Pages/index.html");
     exit();
 
 } else {
