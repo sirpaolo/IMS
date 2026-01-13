@@ -1,8 +1,8 @@
 <?php
 
 $host = "localhost";
-$user = "root";
-$pass = "";
+$user = "ims_user";
+$pass = "12345Admin";
 $db = "ims";
 
 $conn = new mysqli($host, $user, $pass, $db);

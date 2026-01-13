@@ -1,16 +1,19 @@
 <?php
-// ============================
-// DATABASE CONNECTION (MySQL)
-// ============================
-$conn = new mysqli("localhost", "root", "", "IMS");
+
+$host = "localhost";
+$user = "ims_user";
+$pass = "12345Admin";
+$db = "ims";
+
+$conn = new mysqli($host, $user, $pass, $db);
 
 if ($conn->connect_error) {
     die("Database connection failed: " . $conn->connect_error);
 }
 
-/* ==========================
-   GET FORM DATA
-========================== */
+
+//   GET FORM DATA
+
 $customerName = $_POST['customer_name'];
 $orderDate = $_POST['order_date'] ?? date('Y-m-d');
 $productId = filter_input(INPUT_POST, 'product_id', FILTER_VALIDATE_INT);
@@ -21,9 +24,9 @@ if (!$productId || !$quantity) {
     die("Invalid product or quantity.");
 }
 
-/* ==========================
-   CHECK AVAILABLE STOCK
-========================== */
+
+//   CHECK AVAILABLE STOCK
+
 $stockSql = "SELECT QUANTITY, PRICE FROM PRODUCTS WHERE PRODUCT_ID = ?";
 $stockStmt = $conn->prepare($stockSql);
 $stockStmt->bind_param("i", $productId);
@@ -41,19 +44,16 @@ if ($quantity > $product['QUANTITY']) {
     exit;
 }
 
-/* ==========================
-   CALCULATE TOTAL
-========================== */
+
+//   CALCULATE TOTAL
+
 $totalAmount = $product['PRICE'] * $quantity;
 
-/* ==========================
-   START TRANSACTION
-========================== */
+
+
 $conn->begin_transaction();
 
-/* ==========================
-   INSERT ORDER
-========================== */
+
 $insertSql = "
     INSERT INTO ORDERS 
         (CUSTOMER_NAME, ORDER_DATE, PRODUCT_ID, QUANTITY, TOTAL_AMOUNT, STATUS)

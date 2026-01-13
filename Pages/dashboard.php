@@ -1,9 +1,9 @@
 <?php
 
 $host = "localhost";
-$user = "root";
-$pass = "";
-$db = "ims"; // database name
+$user = "ims_user";
+$pass = "12345Admin";
+$db = "ims";
 
 $conn = new mysqli($host, $user, $pass, $db);
 
@@ -102,6 +102,8 @@ $resultRecent = $conn->query("
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/IMS/Pages/template.css">
 </head>
@@ -111,23 +113,48 @@ $resultRecent = $conn->query("
     <div class="d-flex">
 
         <!-- SIDEBAR -->
-        <div class="sidebar p-3">
+        <div class="sidebar p-3" id="sidebar">
             <h4 class="text-center mb-4">INVENTORY MS</h4>
+
 
             <!-- Top links -->
             <div class="sidebar-menu">
-                <a href="#" class="active">Dashboard</a>
-                <a href="/IMS/Pages/products.php">Products</a>
-                <a href="/IMS/Pages/category.php">Categories</a>
-                <a href="/IMS/Pages/orders.php">Orders</a>
-                <a href="/IMS/Pages/users.php">Users</a>
+                <a href="#" class="active">
+                    <i class="bi bi-speedometer2 me-2"></i>
+                    Dashboard
+                </a>
+
+                <a href="/IMS/Pages/products.php">
+                    <i class="bi bi-box-seam me-2"></i>
+                    Products
+                </a>
+
+                <a href="/IMS/Pages/category.php">
+                    <i class="bi bi-tags me-2"></i>
+                    Categories
+                </a>
+
+                <a href="/IMS/Pages/orders.php">
+                    <i class="bi bi-cart-check me-2"></i>
+                    Orders
+                </a>
+
+                <a href="/IMS/Pages/users.php">
+                    <i class="bi bi-people me-2"></i>
+                    Users
+                </a>
+
+                <a href="#">
+                    <i class="bi bi-person-circle me-2"></i>
+                    Profile
+                </a>
+
+                <a href="/IMS/index.html">
+                    <i class="bi bi-box-arrow-right me-2"></i>
+                    Logout
+                </a>
             </div>
 
-            <!-- Bottom links -->
-            <div class="sidebar-bottom">
-                <a href="#">Profile</a>
-                <a href="/IMS/index.html">Logout</a>
-            </div>
         </div>
 
 
@@ -137,13 +164,19 @@ $resultRecent = $conn->query("
 
             <!-- TOP NAVBAR -->
             <nav class="navbar navbar-light bg-white shadow-sm px-4">
-                <span class="navbar-brand mb-0 h5">
-                    Dashboard
-                </span>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Burger button -->
+                    <button class="btn btn-outline-secondary d-md-none" id="sidebarToggle">
+                        ☰
+                    </button>
+                    <span class="navbar-brand mb-0 h5">Dashboard</span>
+                </div>
+
                 <span class="fw-semibold">
                     Welcome, Admin
                 </span>
             </nav>
+
 
             <!-- PAGE CONTENT -->
             <div class="content">
@@ -408,6 +441,16 @@ $resultRecent = $conn->query("
             }
         });
     </script>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggle');
+
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('show');
+        });
+    </script>
+
 
 
 

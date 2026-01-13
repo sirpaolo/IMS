@@ -1,6 +1,11 @@
 <?php
 
-$conn = new mysqli("localhost", "root", "", "IMS");
+$host = "localhost";
+$user = "ims_user";
+$pass = "12345Admin";
+$db = "ims";
+
+$conn = new mysqli($host, $user, $pass, $db);
 
 if ($conn->connect_error) {
     die("Database connection failed: " . $conn->connect_error);

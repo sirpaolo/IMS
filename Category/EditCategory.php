@@ -1,9 +1,9 @@
 <?php
 // MySQL connection
 $host = "localhost";
-$user = "root";
-$pass = "";
-$db = "ims"; // database name
+$user = "ims_user";
+$pass = "12345Admin";
+$db = "ims";
 
 $conn = new mysqli($host, $user, $pass, $db);
 
