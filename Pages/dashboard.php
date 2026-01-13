@@ -1,5 +1,5 @@
 <?php
-// MySQL connection
+
 $host = "localhost";
 $user = "root";
 $pass = "";
@@ -31,7 +31,7 @@ $totalorders = $row['TOTAL'];
 $result = $conn->query("
     SELECT COUNT(PRODUCT_ID) AS LOWSTOCKCOUNT
     FROM PRODUCTS
-    WHERE QUANTITY <= 5
+    WHERE QUANTITY <= 10
 ");
 $row = $result->fetch_assoc();
 $lowStockCount = $row['LOWSTOCKCOUNT'];
@@ -45,7 +45,7 @@ $totalrevenue = $row['TOTAL'];
 $resulttotal55 = $conn->query("
     SELECT NAME, QUANTITY, 'Low Stock' AS STATUS
     FROM PRODUCTS
-    WHERE QUANTITY BETWEEN 1 AND 5
+    WHERE QUANTITY BETWEEN 1 AND 10
 ");
 
 //   OUT OF STOCK ITEMS
@@ -102,55 +102,8 @@ $resultRecent = $conn->query("
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        body {
-            background-color: #f4f6f9;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            min-height: 100vh;
-            background: linear-gradient(180deg, #667eea, #764ba2);
-        }
-
-        .sidebar h4 {
-            color: #fff;
-            font-weight: 700;
-        }
-
-        .sidebar a {
-            color: #e0e0e0;
-            text-decoration: none;
-            padding: 12px 20px;
-            display: block;
-            border-radius: 8px;
-            margin-bottom: 5px;
-        }
-
-        .sidebar a:hover,
-        .sidebar a.active {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: #fff;
-        }
-
-        /* Content */
-        .content {
-            padding: 25px;
-        }
-
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-        }
-
-        .stat-number {
-            font-size: 28px;
-            font-weight: 700;
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/IMS/Pages/template.css">
 </head>
 
 <body>
@@ -161,16 +114,26 @@ $resultRecent = $conn->query("
         <div class="sidebar p-3">
             <h4 class="text-center mb-4">INVENTORY MS</h4>
 
-            <a href="#" class="active">Dashboard</a>
-            <a href="/IMS/Pages/products.php">Products</a>
-            <a href="/IMS/Pages/category.php">Categories</a>
-            <a href="/IMS/Pages/orders.php">Orders</a>
-            <a href="/IMS/Pages/users.php">Users</a>
-            <a href="/IMS/index.html">Logout</a>
+            <!-- Top links -->
+            <div class="sidebar-menu">
+                <a href="#" class="active">Dashboard</a>
+                <a href="/IMS/Pages/products.php">Products</a>
+                <a href="/IMS/Pages/category.php">Categories</a>
+                <a href="/IMS/Pages/orders.php">Orders</a>
+                <a href="/IMS/Pages/users.php">Users</a>
+            </div>
+
+            <!-- Bottom links -->
+            <div class="sidebar-bottom">
+                <a href="#">Profile</a>
+                <a href="/IMS/index.html">Logout</a>
+            </div>
         </div>
 
+
+
         <!-- MAIN CONTENT -->
-        <div class="flex-grow-1">
+        <div class="flex-grow-1 main-content">
 
             <!-- TOP NAVBAR -->
             <nav class="navbar navbar-light bg-white shadow-sm px-4">
@@ -191,7 +154,7 @@ $resultRecent = $conn->query("
                 <div class="row g-4 mb-4">
 
                     <div class="col-md-3">
-                        <div class="card p-3">
+                        <div class="card p-3 stat-card stat-products">
                             <p class="text-muted mb-1">Total Products</p>
                             <div class="stat-number">
                                 <?php echo $totalproducts; ?>
@@ -200,7 +163,7 @@ $resultRecent = $conn->query("
                     </div>
 
                     <div class="col-md-3">
-                        <div class="card p-3">
+                        <div class="card p-3 stat-card stat-stock">
                             <p class="text-muted mb-1">Available Stock</p>
                             <div class="stat-number">
                                 <?php echo $totalstock; ?>
@@ -209,17 +172,16 @@ $resultRecent = $conn->query("
                     </div>
 
                     <div class="col-md-3">
-                        <div class="card p-3">
-                            <p class="text-muted mb-1">Orders</p>
+                        <div class="card p-3 stat-card stat-orders">
+                            <p class="text-muted mb-1">Orders Today</p>
                             <div class="stat-number">
-
                                 <?php echo $totalorders; ?>
                             </div>
                         </div>
                     </div>
 
                     <div class="col-md-3">
-                        <div class="card p-3">
+                        <div class="card p-3 stat-card stat-revenue">
                             <p class="text-muted mb-1">Revenue</p>
                             <div class="stat-number">
                                 ₱ <?php echo $totalrevenue; ?>
@@ -228,6 +190,7 @@ $resultRecent = $conn->query("
                     </div>
 
                 </div>
+
 
                 <div class="row g-4 mb-4">
 
@@ -359,7 +322,7 @@ $resultRecent = $conn->query("
         // Dynamic colors based on stock level
         const barColors = stockData.map(qty => {
             if (qty === 0) return 'rgba(220, 53, 69, 0.8)';     // Red
-            if (qty <= 5) return 'rgba(255, 193, 7, 0.8)';     // Orange
+            if (qty <= 10) return 'rgba(255, 193, 7, 0.8)';     // Orange
             return 'rgba(40, 167, 69, 0.8)';                   // Green
         });
 
@@ -387,7 +350,7 @@ $resultRecent = $conn->query("
                             label: function (context) {
                                 const value = context.raw;
                                 if (value === 0) return ' Out of Stock';
-                                if (value <= 5) return ' Low Stock (' + value + ')';
+                                if (value <= 10) return ' Low Stock (' + value + ')';
                                 return ' In Stock (' + value + ')';
                             }
                         }

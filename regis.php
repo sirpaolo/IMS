@@ -1,11 +1,9 @@
 <?php
-// regis.php (MySQL version)
 
-// MySQL connection setup
 $host = "localhost";
 $user = "root";
 $pass = "";
-$db = "ims"; // database name
+$db = "ims";
 
 $conn = new mysqli($host, $user, $pass, $db);
 
@@ -60,7 +58,7 @@ if ($password === $confirm_password) {
     echo "Password does not match";
 }
 
-// Close connection
+
 $stmt_check->close();
 $conn->close();
 ?>

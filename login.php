@@ -1,9 +1,9 @@
 <?php
-// MySQL connection setup
+
 $host = "localhost";
 $user = "root";
 $pass = "";
-$db = "IMS"; // database name
+$db = "IMS";
 
 $conn = new mysqli($host, $user, $pass, $db);
 
@@ -42,10 +42,9 @@ if (!$row) {
     exit();
 }
 
-// Check password (plain-text comparison – NOT recommended for production)
+
 if ($password === $row['PASSWORD']) {
 
-    // Redirect on success
     header("Location: /IMS/Pages/dashboard.php");
     exit();
 
@@ -53,7 +52,7 @@ if ($password === $row['PASSWORD']) {
     echo "Incorrect password";
 }
 
-// Close connections
+
 $stmt->close();
 $conn->close();
 ?>

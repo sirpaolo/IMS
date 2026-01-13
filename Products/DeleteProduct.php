@@ -1,11 +1,8 @@
 <?php
-// deleteproduct.php (MySQL version)
-
-// MySQL connection
 $host = "localhost";
 $user = "root";
 $pass = "";
-$db = "ims"; // database name
+$db = "ims";
 
 $conn = new mysqli($host, $user, $pass, $db);
 
@@ -33,11 +30,11 @@ if (!$stmt->execute()) {
     die("Delete failed: " . $stmt->error);
 }
 
-// Redirect back
+
 header("Location: /IMS/Pages/products.php");
 exit();
 
-// Close
+
 $stmt->close();
 $conn->close();
 ?>

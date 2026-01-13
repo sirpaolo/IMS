@@ -1,11 +1,9 @@
 <?php
-// updateproduct.php (MySQL version)
 
-// MySQL connection
 $host = "localhost";
 $user = "root";
 $pass = "";
-$db = "ims"; // database name
+$db = "ims";
 
 $conn = new mysqli($host, $user, $pass, $db);
 

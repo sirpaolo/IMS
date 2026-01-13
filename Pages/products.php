@@ -1,9 +1,9 @@
 <?php
-// MySQL connection
+
 $host = "localhost";
 $user = "root";
 $pass = "";
-$db = "ims"; // database name
+$db = "ims";
 
 $conn = new mysqli($host, $user, $pass, $db);
 
@@ -63,55 +63,9 @@ $resultsql3 = $conn->query($sql3);
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/IMS/Pages/template.css">
 
-    <style>
-        body {
-            background-color: #f4f6f9;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            min-height: 100vh;
-            background: linear-gradient(180deg, #667eea, #764ba2);
-        }
-
-        .sidebar h4 {
-            color: #fff;
-            font-weight: 700;
-        }
-
-        .sidebar a {
-            color: #e0e0e0;
-            text-decoration: none;
-            padding: 12px 20px;
-            display: block;
-            border-radius: 8px;
-            margin-bottom: 5px;
-        }
-
-        .sidebar a:hover,
-        .sidebar a.active {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: #fff;
-        }
-
-        /* Content */
-        .content {
-            padding: 25px;
-        }
-
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-        }
-
-        /* Search */
-        .search-input {
-            max-width: 250px;
-        }
-    </style>
 </head>
 
 <body>
@@ -122,16 +76,24 @@ $resultsql3 = $conn->query($sql3);
         <div class="sidebar p-3">
             <h4 class="text-center mb-4">INVENTORY MS</h4>
 
-            <a href="/IMS/Pages/dashboard.php">Dashboard</a>
-            <a href="#" class="active">Products</a>
-            <a href="/IMS/Pages/category.php">Categories</a>
-            <a href="/IMS/Pages/orders.php">Orders</a>
-            <a href="/IMS/Pages/users.php">Users</a>
-            <a href="/IMS/index.html">Logout</a>
+            <!-- Top links -->
+            <div class="sidebar-menu">
+                <a href="/IMS/Pages/dashboard.php">Dashboard</a>
+                <a href="/IMS/Pages/products.php" class="active">Products</a>
+                <a href="/IMS/Pages/category.php">Categories</a>
+                <a href="/IMS/Pages/orders.php">Orders</a>
+                <a href="/IMS/Pages/users.php">Users</a>
+            </div>
+
+            <!-- Bottom links -->
+            <div class="sidebar-bottom">
+                <a href="#">Profile</a>
+                <a href="/IMS/index.html">Logout</a>
+            </div>
         </div>
 
         <!-- MAIN CONTENT -->
-        <div class="flex-grow-1">
+        <div class="flex-grow-1 main-content">
 
             <!-- TOP NAVBAR -->
             <nav class="navbar navbar-light bg-white shadow-sm px-4">
@@ -198,7 +160,7 @@ $resultsql3 = $conn->query($sql3);
 
                                                 <!-- EDIT BUTTON -->
                                                 <button 
-                                                    class="btn btn-sm btn-warning"
+                                                    class="btn btn-sm btn-outline-warning btn-edit"
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#editProductModal"
                                                     data-id="' . $data1 . '"

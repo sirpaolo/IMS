@@ -1,16 +1,13 @@
 <?php
-// ============================
-// DATABASE CONNECTION
-// ============================
+
 $conn = new mysqli("localhost", "root", "", "IMS");
 
 if ($conn->connect_error) {
     die("Database connection failed: " . $conn->connect_error);
 }
 
-// ============================
+
 // GET FORM DATA
-// ============================
 $order_id = filter_input(INPUT_POST, 'order_id', FILTER_VALIDATE_INT);
 $customer_name = $_POST['customer_name'];
 $product_id = filter_input(INPUT_POST, 'product_id', FILTER_VALIDATE_INT);
@@ -21,9 +18,8 @@ if (!$order_id || !$product_id || !$quantity) {
     die("Invalid input.");
 }
 
-/* ==========================
-   LOCK COMPLETED ORDERS
-========================== */
+
+// CHECK IF ORDER IS COMPLETED
 $checkStmt = $conn->prepare(
     "SELECT STATUS FROM ORDERS WHERE ORDER_ID = ?"
 );
@@ -42,9 +38,9 @@ if ($order['STATUS'] === 'Completed') {
     exit();
 }
 
-/* ==========================
-   GET PRODUCT PRICE
-========================== */
+
+//   GET PRODUCT PRICE
+
 $priceStmt = $conn->prepare(
     "SELECT PRICE FROM PRODUCTS WHERE PRODUCT_ID = ?"
 );
@@ -61,9 +57,9 @@ $price = $product['PRICE'];
 
 $total = $price * $quantity;
 
-/* ==========================
-   UPDATE ORDER
-========================== */
+
+//   UPDATE ORDER
+
 $updateStmt = $conn->prepare("
     UPDATE ORDERS
     SET 
@@ -89,8 +85,6 @@ if (!$updateStmt->execute()) {
     die("Failed to update order.");
 }
 
-// ============================
-// REDIRECT
-// ============================
+
 header("Location: /IMS/Pages/orders.php");
 exit();

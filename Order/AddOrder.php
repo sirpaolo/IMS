@@ -75,9 +75,8 @@ if (!$insertStmt->execute()) {
     die("Failed to insert order.");
 }
 
-/* ==========================
-   REDUCE PRODUCT STOCK
-========================== */
+
+//UPDATE STOCK
 $updateStockSql = "
     UPDATE PRODUCTS
     SET QUANTITY = QUANTITY - ?
@@ -91,13 +90,8 @@ if (!$updateStmt->execute()) {
     die("Failed to update stock.");
 }
 
-/* ==========================
-   COMMIT TRANSACTION
-========================== */
+
 $conn->commit();
 
-/* ==========================
-   REDIRECT
-========================== */
 header("Location: /IMS/Pages/orders.php");
 exit;

@@ -1,9 +1,9 @@
 <?php
-// MySQL connection
+
 $host = "localhost";
 $user = "root";
 $pass = "";
-$db = "ims"; // database name
+$db = "ims";
 
 $conn = new mysqli($host, $user, $pass, $db);
 
@@ -80,43 +80,7 @@ if (!$editProductResult) {
     <title>Orders</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        body {
-            background-color: #f4f6f9;
-        }
-
-        .sidebar {
-            width: 250px;
-            min-height: 100vh;
-            background: linear-gradient(180deg, #667eea, #764ba2);
-        }
-
-        .sidebar a {
-            color: #e0e0e0;
-            padding: 12px 20px;
-            display: block;
-            text-decoration: none;
-            border-radius: 8px;
-            margin-bottom: 5px;
-        }
-
-        .sidebar a.active,
-        .sidebar a:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: #fff;
-        }
-
-        .content {
-            padding: 25px;
-        }
-
-        .card {
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            border: none;
-        }
-    </style>
+    <link rel="stylesheet" href="/IMS/Pages/template.css">
 </head>
 
 <body>
@@ -124,17 +88,26 @@ if (!$editProductResult) {
 
         <!-- SIDEBAR -->
         <div class="sidebar p-3">
-            <h4 class="text-center text-white mb-4">INVENTORY MS</h4>
-            <a href="/IMS/Pages/dashboard.php">Dashboard</a>
-            <a href="/IMS/Pages/products.php">Products</a>
-            <a href="/IMS/Pages/category.php">Categories</a>
-            <a href="#" class="active">Orders</a>
-            <a href="/IMS/Pages/users.php">Users</a>
-            <a href="/IMS/index.html">Logout</a>
+            <h4 class="text-center mb-4">INVENTORY MS</h4>
+
+            <!-- Top links -->
+            <div class="sidebar-menu">
+                <a href="/IMS/Pages/dashboard.php">Dashboard</a>
+                <a href="/IMS/Pages/products.php">Products</a>
+                <a href="/IMS/Pages/category.php">Categories</a>
+                <a href="/IMS/Pages/orders.php" class="active">Orders</a>
+                <a href="/IMS/Pages/users.php">Users</a>
+            </div>
+
+            <!-- Bottom links -->
+            <div class="sidebar-bottom">
+                <a href="#">Profile</a>
+                <a href="/IMS/index.html">Logout</a>
+            </div>
         </div>
 
         <!-- MAIN -->
-        <div class="flex-grow-1">
+        <div class="flex-grow-1 main-content">
 
             <!-- TOP NAVBAR -->
             <nav class="navbar navbar-light bg-white shadow-sm px-4">
@@ -220,7 +193,8 @@ if (!$editProductResult) {
                                                 <!-- EDIT -->
                                                 <?php $isCompleted = ($row['STATUS'] === 'Completed'); ?>
 
-                                                <button class="btn btn-sm btn-warning <?= $isCompleted ? 'disabled' : '' ?>"
+                                                <button
+                                                    class="btn btn-sm btn-outline-warning btn-edit <?= $isCompleted ? 'disabled' : '' ?>"
                                                     <?= $isCompleted ? 'disabled' : '' ?> data-bs-toggle="modal"
                                                     data-bs-target="#editOrderModal" data-id="<?= $row['ORDER_ID'] ?>"
                                                     data-customer="<?= htmlspecialchars($row['CUSTOMER_NAME'], ENT_QUOTES) ?>"

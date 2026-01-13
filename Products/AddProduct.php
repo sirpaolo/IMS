@@ -1,11 +1,8 @@
 <?php
-// Addproduct.php (MySQL version)
-
-// MySQL connection
 $host = "localhost";
 $user = "root";
 $pass = "";
-$db = "ims"; // database name
+$db = "ims";
 
 $conn = new mysqli($host, $user, $pass, $db);
 
@@ -43,7 +40,7 @@ $stmt->bind_param(
     $price        // d = double
 );
 
-// Execute
+
 if ($stmt->execute()) {
     header("Location: /IMS/Pages/products.php");
     exit();
@@ -51,7 +48,7 @@ if ($stmt->execute()) {
     echo "Insert Error";
 }
 
-// Close connections
+
 $stmt->close();
 $conn->close();
 ?>
