@@ -2,6 +2,12 @@
 
 A full-stack **Inventory Management System** built to efficiently manage products, categories, orders, and users with secure authentication and real-time inventory tracking. Designed with scalability, security, and usability in mind.
 
+
+<img width="1906" height="906" alt="Screenshot 2026-02-07 095811" src="https://github.com/user-attachments/assets/b007d2e8-41b7-4352-afed-67a968d6b277" />
+
+<img width="1887" height="910" alt="Screenshot 2026-02-07 141402" src="https://github.com/user-attachments/assets/9b301db0-962f-49d4-98cc-00e51fdd571c" />
+
+
 ---
 
 ##  Features
